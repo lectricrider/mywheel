@@ -38,36 +38,26 @@ def ride_coordinates(ride_id, username=None, password=None, out_file=sys.stdout)
     """Get coordinates for a ride."""
     return do_request(f'{RIDE_OORDINATES_URL}/{ride_id}', username=username, password=password, out_file=out_file)
 
-def all_rides(username, password, out_file=sys.stdout):
+def all_rides(username, password, out_dir='.'):
     """Get all of your rides."""
     print(f'Getting all rides for {username}...')
-    rides = io.StringIO()
-    rides = ride_manifest(username=username, password=password, out_file=None)
+    rides = ride_manifest(username=username, password=password, out_file=f'{out_dir}/ride_manifest.json')
     all_rides = []
     print(f'Found {len(rides["data"]["entries"])} rides.')
     for ride in rides['data']['entries']:
         print(f'Getting coordinates for ride {ride["id"]}.')
-        coordinates = io.StringIO()
-        coordinates = ride_coordinates(ride_id=ride['id'], username=username, password=password, out_file=None)
-        all_rides.append({
-            'info': ride,
-            'coordinates': coordinates
-        })
-    if out_file:
-        print(f'Writing {len(all_rides)} rides to {out_file}.')
-        with open(out_file, 'w') as f:
-            f.write(json.dumps(all_rides, indent=4))
+        coordinates = ride_coordinates(ride_id=ride['id'], username=username, password=password, out_file=f'{out_dir}/{ride["id"]}.json')
     print('Done.')
 
 if __name__ == '__main__':
     argparser = argparse.ArgumentParser()
     argparser.add_argument('-u', '--username', help='Username or email.')
     argparser.add_argument('-p', '--password', help='Password.')
-    argparser.add_argument('-o', '--out', help='Output file.', default='my_rides.json')
+    argparser.add_argument('-d', '--out_dir', help='Output Directory', default='.')
     args = argparser.parse_args()
     if not args.username:
         args.username = input('Username/Email: ')
     if not args.password:
         args.password = getpass.getpass()
-    all_rides(username=args.username, password=args.password, out_file=args.out)
-    
+    all_rides(username=args.username, password=args.password, out_dir=args.out_dir)
+ 
